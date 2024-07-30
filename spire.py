@@ -1,18 +1,27 @@
 import os
 import json
+import re
 
 
 class SpireRun:
 	def __init__(self,filename):
+		self.filename = filename
 		self.fileInfo = self.processRun(filename)
 		fileInfoString = self.fileInfo
+		self.mod = isModdedRun(filename)
+		
+		#print("FILEINFOSTRING: ")
+		#print(fileInfoString)
 		for key in fileInfoString:
+			
 			try:
 				exec("self."+key+"="+str(fileInfoString[key]))
 
 			#for individual errors
-			except SyntaxError as e: 
-				if key == "play_id":
+			except SyntaxError as e:
+				if key == "character_chosen":
+					continue
+				elif key == "play_id":
 					self.play_id = fileInfoString[key]
 				elif key == "build_version":
 					self.build_version = fileInfoString[key]
@@ -23,10 +32,15 @@ class SpireRun:
 				elif key == "neow_bonus":
 					self.neow_bonus = fileInfoString[key]
 				else:	
-					print("\""+key+"\"",e)
+					print("\""+key+"\"",e) 
+				
 
 			#for Strings in dictionnary		
-			except NameError: exec("self."+key+"=\""+fileInfoString[key]+"\"")
+			except NameError:
+				if "basemod" in key:
+					self.mod = True
+				else:
+					exec("self."+key+"=\""+fileInfoString[key]+"\"")
 
 	def allInfo(self):
 		return sorted(list(self.fileInfo.keys()))
@@ -81,11 +95,15 @@ def loadDefectRuns():
 def loadWatcherRuns():
 	return [SpireRun("runs/WATCHER/"+file) for file in os.listdir("runs/WATCHER")]
 
-
+def isModdedRun(filename):	
+	pattern = re.compile(r"\"\w+:\w+\"")
+	
+	with open(filename,'r') as runfile:
+		return pattern.search(runfile.readline())
 
 def main():
-	run1 = SpireRun("runs/THE_SILENT/1543965538.run")
-	
+	run1 = loadIroncladRuns()[0]	
+	print(run1.filename)								
 	#print(run1.allInfo())
 	#print(run1.purchased_purges)
 	print(run1.getMetaData())
@@ -97,6 +115,8 @@ def main():
 	#the_silent_runs = loadTheSilentRuns()
 	#defect_runs = loadDefectRuns()
 	#watcher_runs = loadWatcherRuns()
+
+	
 
 
 	
